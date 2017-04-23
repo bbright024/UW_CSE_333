@@ -1,0 +1,36 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+void dump_hex(void *p_data, int byte_len);
+
+typedef struct {
+	char char_val;
+	int32_t int_val;
+	float float_val;
+	double double_val;
+} Ex2Struct;
+
+/* print in hex the values of the bytes allocated to some variable */
+int main(int argc, char *argv[])
+{
+	char char_val = '0';
+	int32_t int_val = 1;
+	float float_val = 1.0;
+	double double_val = 1.0;
+
+	Ex2Struct struct_val = {'0', 1, 1.0, 1.0};
+
+	dump_hex(&char_val, sizeof(char));
+	dump_hex(&int_val, sizeof(int32_t));
+	dump_hex(&float_val , sizeof(float));
+	dump_hex(&double_val , sizeof(double));
+	dump_hex(&struct_val , sizeof(structVal));
+
+	return 0;
+}
+
+void dump_hex(void *p_data, int byte_len)
+{
+
+	printf("\n          \n");
+}

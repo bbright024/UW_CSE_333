@@ -1,0 +1,27 @@
+######################
+Brian Bright 4/23/2017
+
+University of Washington CSE 333 - Systems Programming 
+
+These are practice problems in C and C++, as given by 
+
+https://courses.cs.washington.edu/courses/cse333/16su/calendar/hwlist.html
+
+Solutions are included when the problem itself was difficult; for pure practice stuff
+I didn't bother.
+
+
+Ex0 - examining different pitfalls of implementing reccurences by calculating pi using the 
+	nilakantha infinite series.  Discovered stack overflow using recursion, fixed by using
+	a while loop instead of recursive calls.  Discovered integer overflow, fixed by
+	changing the type to unsigned long int. 
+
+Ex1 - implementing insertion sort and selection sort in c with unsigned long ints.
+	nothing too interesting, but it was helpful to get more practice on sorts.
+
+Ex2 - printed out byte values of different types of variables by taking their sizeof value 
+	and using the pointer to the variable to print out bytes at that location in memory.
+
+Ex3 - simple, allocated a struct with 3 variables and freed at the end.
+
+
