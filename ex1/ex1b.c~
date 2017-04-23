@@ -1,0 +1,36 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+void CopyAndSort(int x, int16_t one[x], int16_t two[x]);
+
+int main(int argc, char *argv[])
+{
+	
+	int16_t one = {5, 4, 3, 2, 1};
+	int16_t two[5];
+
+	CopyAndSort(5, one, two);
+	return 0;
+}
+
+void CopyAndSort(int x, int16_t one[x], int16_t two[x])
+{
+	int16_t comp_a;
+	int16_t comp_b;
+	
+	int i, j = 0;
+
+	for(; i < x-1; i++)
+		{
+			comp_a = one[i];
+			for(j = i+1; j < x; j++)
+				{
+					comp_b = one[j];
+					if(comp_a < comp_b)
+						{
+							two[i] = 
+						}
+				}
+		}
+}
