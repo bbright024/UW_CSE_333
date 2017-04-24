@@ -14,7 +14,12 @@ location allocate_point(int64_t x, int64_t y, int64_t z);
 
 int main(int argc, char *argv[])
 {
-	location goal = allocate_point(1, 2, 3);
+	location goal;
+	if ((goal = allocate_point(1, 2, 3)) == NULL)
+		{
+			fprintf(stderr, "allocate_point() failed.\n")
+		}
+	
 
 	printf("this point is at (%lu, %lu, %lu) \n", goal->x, goal->y, goal->z);
 
@@ -25,7 +30,9 @@ int main(int argc, char *argv[])
 
 location allocate_point(int64_t x, int64_t y, int64_t z)
 {
-	location new_point = malloc(sizeof(Point3d));
+	location new_point;
+	if ((new_point = malloc(sizeof(Point3d))) == NULL )
+		return NULL;
 	new_point->x  = x;
 	new_point->y = y;
 	new_point->z = z;

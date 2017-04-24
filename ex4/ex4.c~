@@ -1,0 +1,10 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include "nthprime.h"
+
+int main(int argc, char *argv[])
+{
+	uint64_t desired = 5;
+	printf("the %lu prime is %lu \n", desired, nth_prime(desired));
+	return 0;
+}
