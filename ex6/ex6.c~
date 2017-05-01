@@ -1,0 +1,24 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static void usage(char *prog);
+
+int main(int argc, char *argv[])
+{
+	fopen();
+
+	
+	
+	fclose();
+	
+	return EXIT_SUCCESS;
+}
+
+static void usage(char *prog)
+{
+	fprintf(STDERR,
+			"Usage: %s requires a file name",
+			prog);
+	exit();
+}
