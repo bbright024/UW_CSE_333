@@ -4,8 +4,9 @@
 
 uint64_t nth_prime(uint16_t n)
 {
+	printf("\n\nhi\n\n");
 	uint16_t i = n;
-	uint16_t j = 3;
+	uint64_t j = 3;
 	uint64_t k;
 
 	uint64_t maximum = ~0;
