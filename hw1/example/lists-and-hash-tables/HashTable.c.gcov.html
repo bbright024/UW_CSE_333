@@ -1,0 +1,536 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - example.info - lists-and-hash-tables/HashTable.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">lists-and-hash-tables</a> - HashTable.c<span style="font-size: 80%;"> (source / <a href="HashTable.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">example.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">144</td>
+            <td class="headerCovTableEntry">206</td>
+            <td class="headerCovTableEntryLo">69.9 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2017-05-05 05:27:41</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">17</td>
+            <td class="headerCovTableEntry">18</td>
+            <td class="headerCovTableEntryHi">94.4 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /* </a>
+<span class="lineNum">       2 </span>            :  * Copyright 1969 bbb
+<span class="lineNum">       3 </span>            :  */
+<span class="lineNum">       4 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">       5 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">       6 </span>            : #include &lt;stdint.h&gt;
+<span class="lineNum">       7 </span>            : 
+<span class="lineNum">       8 </span>            : #include &lt;assert.h&gt;
+<span class="lineNum">       9 </span>            : #include &quot;HashTable.h&quot;
+<span class="lineNum">      10 </span>            : #include &quot;HashTable_priv.h&quot;
+<span class="lineNum">      11 </span>            : 
+<span class="lineNum">      12 </span>            : // struct htrec;
+<span class="lineNum">      13 </span>            : // typedef struct htrec *HashTable;
+<span class="lineNum">      14 </span>            : // This is the struct that we use to represent a hash table. Quite simply, a
+<span class="lineNum">      15 </span>            : // hash table is just an array of buckets, where each bucket is a linked list
+<span class="lineNum">      16 </span>            : // of HTKeyValue structs.
+<span class="lineNum">      17 </span>            : 
+<span class="lineNum">      18 </span>            : /* 
+<span class="lineNum">      19 </span>            : // This is the struct we use to represent an iterator.
+<span class="lineNum">      20 </span>            : 
+<span class="lineNum">      21 </span>            : 
+<span class="lineNum">      22 </span>            : // This is the internal hash function we use to map from uint64_t keys to a
+<span class="lineNum">      23 </span>            : // bucket number.
+<span class="lineNum">      24 </span>            : uint64_t HashKeyToBucketNum(HashTable ht, uint64_t key);
+<span class="lineNum">      25 </span>            :  */
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : // typedef void(*ValueFreeFnPtr)(void *value);
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            : /* private utility function to grow the hashtable if load factor too high */
+<span class="lineNum">      30 </span>            : static void ResizeHashTable(HashTable ht);
+<a name="31"><span class="lineNum">      31 </span>            : </a>
+<span class="lineNum">      32 </span>            : /* free function that does nothing */
+<a name="33"><span class="lineNum">      33 </span><span class="lineCov">          1 : static void NullFree(void *freeme) { }</span></a>
+<span class="lineNum">      34 </span>            : 
+<span class="lineNum">      35 </span><span class="lineCov">          1 : HashTable AllocateHashTable(uint32_t num_buckets) {</span>
+<span class="lineNum">      36 </span>            :         HashTable ht;
+<span class="lineNum">      37 </span>            :         uint32_t i;
+<span class="lineNum">      38 </span>            : 
+<span class="lineNum">      39 </span><span class="lineCov">          1 :         if (num_buckets == 0) {</span>
+<span class="lineNum">      40 </span><span class="lineNoCov">          0 :                         return NULL;</span>
+<span class="lineNum">      41 </span>            :         }
+<span class="lineNum">      42 </span>            : 
+<span class="lineNum">      43 </span><span class="lineCov">          1 :         if ((ht = malloc(sizeof(HashTableRecord))) == NULL)</span>
+<span class="lineNum">      44 </span><span class="lineNoCov">          0 :                 return NULL;</span>
+<span class="lineNum">      45 </span>            : 
+<span class="lineNum">      46 </span><span class="lineCov">          1 :         ht-&gt;num_buckets = num_buckets;</span>
+<span class="lineNum">      47 </span><span class="lineCov">          1 :         ht-&gt;num_elements = 0;</span>
+<span class="lineNum">      48 </span><span class="lineCov">          1 :         ht-&gt;buckets = (LinkedList *)malloc(num_buckets * sizeof(LinkedList));</span>
+<span class="lineNum">      49 </span>            : 
+<span class="lineNum">      50 </span><span class="lineCov">          1 :         if(ht-&gt;buckets == NULL) {</span>
+<span class="lineNum">      51 </span><span class="lineNoCov">          0 :                 free(ht);</span>
+<span class="lineNum">      52 </span><span class="lineNoCov">          0 :                 return NULL;</span>
+<span class="lineNum">      53 </span>            :         }
+<span class="lineNum">      54 </span>            : 
+<span class="lineNum">      55 </span><span class="lineCov">      10001 :         for (i = 0; i &lt; num_buckets; i++) {</span>
+<span class="lineNum">      56 </span><span class="lineCov">      10000 :                 if ((ht-&gt;buckets[i] = AllocateLinkedList()) == NULL)</span>
+<span class="lineNum">      57 </span>            :                         {
+<span class="lineNum">      58 </span>            :                                 uint32_t j;
+<span class="lineNum">      59 </span><span class="lineNoCov">          0 :                                 for (j = 0; j &lt; i; j++)</span>
+<span class="lineNum">      60 </span><span class="lineNoCov">          0 :                                         FreeLinkedList(ht-&gt;buckets[j], NullFree); /* cool hack, wow */</span>
+<span class="lineNum">      61 </span><span class="lineNoCov">          0 :                                 free(ht);</span>
+<span class="lineNum">      62 </span><span class="lineNoCov">          0 :                                 return NULL;</span>
+<span class="lineNum">      63 </span>            :                         }
+<span class="lineNum">      64 </span>            : 
+<span class="lineNum">      65 </span>            :         }
+<span class="lineNum">      66 </span>            : 
+<span class="lineNum">      67 </span><span class="lineCov">          1 :         return ht;</span>
+<a name="68"><span class="lineNum">      68 </span>            : }</a>
+<span class="lineNum">      69 </span>            : 
+<span class="lineNum">      70 </span><span class="lineCov">          1 : void FreeHashTable(HashTable table, ValueFreeFnPtr value_free_function)</span>
+<span class="lineNum">      71 </span>            : {
+<span class="lineNum">      72 </span><span class="lineCov">          1 :         assert(table != NULL);</span>
+<span class="lineNum">      73 </span>            :         uint32_t i, n;
+<span class="lineNum">      74 </span>            :         //      LinkedList curr_list;
+<span class="lineNum">      75 </span><span class="lineCov">          1 :         n = table-&gt;num_buckets;</span>
+<span class="lineNum">      76 </span><span class="lineCov">      10001 :         for (i = 0; i &lt; n; i++)</span>
+<span class="lineNum">      77 </span>            :                 {
+<span class="lineNum">      78 </span>            :                         //                      curr_list = ht-&gt;buckets[i];
+<span class="lineNum">      79 </span><span class="lineCov">      10000 :                         FreeLinkedList(table-&gt;buckets[i], value_free_function);</span>
+<span class="lineNum">      80 </span>            :                 }
+<span class="lineNum">      81 </span><span class="lineCov">          1 :         free(table);</span>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">          1 : }</span></a>
+<span class="lineNum">      83 </span>            : 
+<span class="lineNum">      84 </span><span class="lineCov">      40001 : uint64_t NumElementsInHashTable(HashTable table)</span>
+<span class="lineNum">      85 </span>            : {
+<span class="lineNum">      86 </span><span class="lineCov">      40001 :         assert(table);</span>
+<span class="lineNum">      87 </span><span class="lineCov">      40001 :         return table-&gt;num_elements;</span>
+<span class="lineNum">      88 </span>            : }
+<span class="lineNum">      89 </span>            : /* 
+<span class="lineNum">      90 </span>            : typedef struct {
+<span class="lineNum">      91 </span>            :   uint64_t   key;    // the key in the key/value pair
+<span class="lineNum">      92 </span>            :   void      *value;  // the value in the key/value pair
+<a name="93"><span class="lineNum">      93 </span>            : } HTKeyValue, *HTKeyValuePtr;</a>
+<span class="lineNum">      94 </span>            :  */
+<span class="lineNum">      95 </span><span class="lineCov">      40007 : uint64_t FNVHash64(unsigned char *buffer, unsigned int len)</span>
+<span class="lineNum">      96 </span>            : {
+<span class="lineNum">      97 </span>            :         
+<span class="lineNum">      98 </span>            :         static const uint64_t FNV1_64_INIT = 0xcbf29ce484222325ULL;
+<span class="lineNum">      99 </span>            :         static const uint64_t FNV_64_PRIME = 0x100000001b3ULL;
+<span class="lineNum">     100 </span><span class="lineCov">      40007 :         unsigned char *bp = (unsigned char *) buffer;</span>
+<span class="lineNum">     101 </span><span class="lineCov">      40007 :         unsigned char *be = bp + len;</span>
+<span class="lineNum">     102 </span><span class="lineCov">      40007 :         uint64_t hval = FNV1_64_INIT;</span>
+<span class="lineNum">     103 </span>            : 
+<span class="lineNum">     104 </span>            :         /* FNV-1a hash each octet of the buffer */
+<span class="lineNum">     105 </span><span class="lineCov">     400070 :         while (bp &lt; be)</span>
+<span class="lineNum">     106 </span>            :                 {
+<span class="lineNum">     107 </span>            :                         /* xor the bottom with the current octet */
+<span class="lineNum">     108 </span><span class="lineCov">     320056 :                         hval ^= (uint64_t) * bp++;</span>
+<span class="lineNum">     109 </span>            :                         /* multiply by the 64 bit FNV magic prime mod 2^64 */
+<span class="lineNum">     110 </span><span class="lineCov">     320056 :                         hval *= FNV_64_PRIME;</span>
+<span class="lineNum">     111 </span>            :                 }
+<span class="lineNum">     112 </span><span class="lineCov">      40007 :         return hval;</span>
+<a name="113"><span class="lineNum">     113 </span>            : }</a>
+<span class="lineNum">     114 </span>            : 
+<span class="lineNum">     115 </span><span class="lineCov">      40007 : uint64_t FNVHashInt64(uint64_t hashme) {</span>
+<span class="lineNum">     116 </span>            :         unsigned char buf[8];
+<span class="lineNum">     117 </span>            :         int i;
+<span class="lineNum">     118 </span>            : 
+<span class="lineNum">     119 </span><span class="lineCov">     360063 :         for (i = 0; i &lt; 8; i++)</span>
+<span class="lineNum">     120 </span>            :                 {
+<span class="lineNum">     121 </span><span class="lineCov">     320056 :                         buf[i] = (unsigned char) (hashme &amp; 0x00000000000000FFULL);</span>
+<span class="lineNum">     122 </span><span class="lineCov">     320056 :                         hashme &gt;&gt;= 8;</span>
+<span class="lineNum">     123 </span>            :                 }
+<span class="lineNum">     124 </span><span class="lineCov">      40007 :         return FNVHash64(buf, 8);</span>
+<a name="125"><span class="lineNum">     125 </span>            : }</a>
+<span class="lineNum">     126 </span>            : 
+<span class="lineNum">     127 </span><span class="lineCov">      20005 : uint64_t HashKeyToBucketNum(HashTable ht, uint64_t key)</span>
+<span class="lineNum">     128 </span>            : {
+<span class="lineNum">     129 </span><span class="lineCov">      20005 :         return key % ht-&gt;num_buckets;</span>
+<span class="lineNum">     130 </span>            : }
+<a name="131"><span class="lineNum">     131 </span>            : </a>
+<span class="lineNum">     132 </span>            : 
+<span class="lineNum">     133 </span><span class="lineCov">      10920 : static int find_key(LinkedList list,</span>
+<span class="lineNum">     134 </span>            :                                         uint64_t key,
+<span class="lineNum">     135 </span>            :                                         HTKeyValue *oldkeyvalue,
+<span class="lineNum">     136 </span>            :                                         int remove)
+<span class="lineNum">     137 </span>            : {
+<span class="lineNum">     138 </span>            :         LLIter iter;
+<span class="lineNum">     139 </span>            :         HTKeyValue *storage;
+<span class="lineNum">     140 </span><span class="lineCov">      10920 :         uint64_t elements_in_bucket = NumElementsInLinkedList(list);</span>
+<span class="lineNum">     141 </span><span class="lineCov">      10920 :         if(elements_in_bucket == 0)</span>
+<span class="lineNum">     142 </span>            :                 {
+<span class="lineNum">     143 </span><span class="lineNoCov">          0 :                         return 0;</span>
+<span class="lineNum">     144 </span>            :                 }
+<span class="lineNum">     145 </span>            : 
+<span class="lineNum">     146 </span><span class="lineCov">      10920 :         if ((iter = LLMakeIterator(list, 0)) == NULL)</span>
+<span class="lineNum">     147 </span><span class="lineNoCov">          0 :                 return -1;</span>
+<span class="lineNum">     148 </span>            :         
+<span class="lineNum">     149 </span>            :         //while (LLIteratorHasNext(iter))
+<span class="lineNum">     150 </span>            :         do
+<span class="lineNum">     151 </span>            :                 {
+<span class="lineNum">     152 </span>            :                         
+<span class="lineNum">     153 </span><span class="lineCov">      18836 :                         LLIteratorGetPayload(iter, (void **) &amp;storage);</span>
+<span class="lineNum">     154 </span><span class="lineCov">      18836 :                         if (storage-&gt;key == key)</span>
+<span class="lineNum">     155 </span>            :                                 {
+<span class="lineNum">     156 </span>            :                                         /* key was found */
+<span class="lineNum">     157 </span><span class="lineCov">          3 :                                         oldkeyvalue-&gt;key = key;</span>
+<span class="lineNum">     158 </span><span class="lineCov">          3 :                                         oldkeyvalue-&gt;value = storage-&gt;value;</span>
+<span class="lineNum">     159 </span><span class="lineCov">          3 :                                         if (remove)</span>
+<span class="lineNum">     160 </span>            :                                                 {
+<span class="lineNum">     161 </span><span class="lineCov">          1 :                                                         LLIteratorDelete(iter, &amp;NullFree);</span>
+<span class="lineNum">     162 </span>            :                                                         //free(storage);
+<span class="lineNum">     163 </span>            :                                                 }
+<span class="lineNum">     164 </span><span class="lineCov">          3 :                                         LLIteratorFree(iter);</span>
+<span class="lineNum">     165 </span><span class="lineCov">          3 :                                         return 1;</span>
+<span class="lineNum">     166 </span>            :                                 }
+<span class="lineNum">     167 </span><span class="lineCov">      18833 :                         if(!LLIteratorHasNext(iter))</span>
+<span class="lineNum">     168 </span><span class="lineCov">      10917 :                                 break;</span>
+<span class="lineNum">     169 </span>            :                         
+<span class="lineNum">     170 </span><span class="lineCov">       7916 :                         LLIteratorNext(iter);</span>
+<span class="lineNum">     171 </span><span class="lineCov">       7916 :                 } while(1);</span>
+<span class="lineNum">     172 </span>            :         
+<span class="lineNum">     173 </span><span class="lineCov">      10917 :         LLIteratorFree(iter);</span>
+<span class="lineNum">     174 </span>            : 
+<span class="lineNum">     175 </span>            :         /* key not in given list */
+<span class="lineNum">     176 </span><span class="lineCov">      10917 :         return 0;</span>
+<a name="177"><span class="lineNum">     177 </span>            : }</a>
+<span class="lineNum">     178 </span>            : 
+<span class="lineNum">     179 </span><span class="lineCov">      20000 : int InsertHashTable(HashTable table,</span>
+<span class="lineNum">     180 </span>            :                     HTKeyValue newkeyvalue,
+<span class="lineNum">     181 </span>            :                     HTKeyValue *oldkeyvalue)
+<span class="lineNum">     182 </span>            : {
+<span class="lineNum">     183 </span><span class="lineCov">      20000 :         assert(table);</span>
+<span class="lineNum">     184 </span>            :         /* check if need to resize the table to make sure we get the right bucket */
+<span class="lineNum">     185 </span><span class="lineCov">      20000 :         ResizeHashTable(table);</span>
+<span class="lineNum">     186 </span><span class="lineCov">      20000 :         uint64_t the_key = newkeyvalue.key;</span>
+<span class="lineNum">     187 </span>            :         
+<span class="lineNum">     188 </span>            :         /* the bucket that will be home for the pair */
+<span class="lineNum">     189 </span>            :         uint64_t home_bucket;
+<span class="lineNum">     190 </span><span class="lineCov">      20000 :         home_bucket = HashKeyToBucketNum(table, the_key);</span>
+<span class="lineNum">     191 </span>            : 
+<span class="lineNum">     192 </span>            :         /* the list where the pair will be stored */
+<span class="lineNum">     193 </span>            :         LinkedList home_list;
+<span class="lineNum">     194 </span><span class="lineCov">      20000 :         home_list = table-&gt;buckets[home_bucket];</span>
+<span class="lineNum">     195 </span>            : 
+<span class="lineNum">     196 </span><span class="lineCov">      20000 :         HTKeyValue *new_payload = malloc(sizeof(HTKeyValue));</span>
+<span class="lineNum">     197 </span><span class="lineCov">      20000 :         if(new_payload == NULL)</span>
+<span class="lineNum">     198 </span><span class="lineNoCov">          0 :                 return NULL;</span>
+<span class="lineNum">     199 </span><span class="lineCov">      20000 :         new_payload-&gt;key = the_key;</span>
+<span class="lineNum">     200 </span><span class="lineCov">      20000 :         new_payload-&gt;value = newkeyvalue.value;</span>
+<span class="lineNum">     201 </span>            :         
+<span class="lineNum">     202 </span><span class="lineCov">      20000 :         if(NumElementsInLinkedList(home_list) == 0)</span>
+<span class="lineNum">     203 </span>            :                 {
+<span class="lineNum">     204 </span>            :                         /* empty list, no need to search */
+<span class="lineNum">     205 </span><span class="lineCov">       9085 :                         PushLinkedList(home_list, new_payload);</span>
+<span class="lineNum">     206 </span><span class="lineCov">       9085 :                         table-&gt;num_elements += 1;</span>
+<span class="lineNum">     207 </span><span class="lineCov">       9085 :                         return 1;</span>
+<span class="lineNum">     208 </span>            :                 }
+<span class="lineNum">     209 </span>            :         
+<span class="lineNum">     210 </span>            :         /* need to check list for key */
+<span class="lineNum">     211 </span><span class="lineCov">      10915 :         int found = find_key(home_list, the_key, oldkeyvalue, 1);</span>
+<span class="lineNum">     212 </span><span class="lineCov">      10915 :         if(found == -1)                         /* the out of memory code */</span>
+<span class="lineNum">     213 </span>            :                 {
+<span class="lineNum">     214 </span><span class="lineNoCov">          0 :                         table-&gt;num_elements -=1;</span>
+<span class="lineNum">     215 </span><span class="lineNoCov">          0 :                         return 0;               </span>
+<span class="lineNum">     216 </span>            :                 }
+<span class="lineNum">     217 </span><span class="lineCov">      10915 :         PushLinkedList(home_list, new_payload);</span>
+<span class="lineNum">     218 </span>            : 
+<span class="lineNum">     219 </span><span class="lineCov">      10915 :         if (found == 1)</span>
+<span class="lineNum">     220 </span>            :                 {
+<span class="lineNum">     221 </span>            :                         
+<span class="lineNum">     222 </span><span class="lineNoCov">          0 :                         printf(&quot;%lu   %lu    found a copy \n&quot;, the_key, oldkeyvalue-&gt;key);</span>
+<span class="lineNum">     223 </span><span class="lineNoCov">          0 :                         return 2;</span>
+<span class="lineNum">     224 </span>            :                 }
+<span class="lineNum">     225 </span><span class="lineCov">      10915 :         table-&gt;num_elements += 1;</span>
+<span class="lineNum">     226 </span><span class="lineCov">      10915 :         return 1;</span>
+<a name="227"><span class="lineNum">     227 </span>            : }</a>
+<span class="lineNum">     228 </span>            : 
+<span class="lineNum">     229 </span><span class="lineCov">          4 : int LookupHashTable(HashTable table,</span>
+<span class="lineNum">     230 </span>            :                     uint64_t key,
+<span class="lineNum">     231 </span>            :                     HTKeyValue *keyvalue)
+<span class="lineNum">     232 </span>            : {
+<span class="lineNum">     233 </span><span class="lineCov">          4 :         assert(table);</span>
+<span class="lineNum">     234 </span><span class="lineCov">          4 :         uint64_t home_bucket = HashKeyToBucketNum(table, key);</span>
+<span class="lineNum">     235 </span><span class="lineCov">          4 :         LinkedList home_list = table-&gt;buckets[home_bucket];</span>
+<span class="lineNum">     236 </span><span class="lineCov">          4 :         return find_key(home_list, key, keyvalue, 0);</span>
+<a name="237"><span class="lineNum">     237 </span>            : }</a>
+<span class="lineNum">     238 </span>            : 
+<span class="lineNum">     239 </span><span class="lineCov">          1 : int RemoveFromHashTable(HashTable table,</span>
+<span class="lineNum">     240 </span>            :                         uint64_t key,
+<span class="lineNum">     241 </span>            :                         HTKeyValue *keyvalue)
+<span class="lineNum">     242 </span>            : {
+<span class="lineNum">     243 </span><span class="lineCov">          1 :         assert(table);</span>
+<span class="lineNum">     244 </span><span class="lineCov">          1 :         uint64_t home_bucket = HashKeyToBucketNum(table, key);</span>
+<span class="lineNum">     245 </span><span class="lineCov">          1 :         LinkedList home_list = table-&gt;buckets[home_bucket];</span>
+<span class="lineNum">     246 </span><span class="lineCov">          1 :         int found = find_key(home_list, key, keyvalue, 1);</span>
+<span class="lineNum">     247 </span><span class="lineCov">          1 :         if (found)</span>
+<span class="lineNum">     248 </span><span class="lineCov">          1 :                 table-&gt;num_elements -= 1;</span>
+<span class="lineNum">     249 </span><span class="lineCov">          1 :         return found;</span>
+<a name="250"><span class="lineNum">     250 </span>            : }</a>
+<span class="lineNum">     251 </span>            : 
+<span class="lineNum">     252 </span><span class="lineCov">          1 : HTIter HashTableMakeIterator(HashTable table)</span>
+<span class="lineNum">     253 </span>            : {
+<span class="lineNum">     254 </span><span class="lineCov">          1 :         assert(table);</span>
+<span class="lineNum">     255 </span><span class="lineCov">          1 :         HTIter iter = malloc(sizeof(HTIterRecord));</span>
+<span class="lineNum">     256 </span><span class="lineCov">          1 :         if (iter == NULL)</span>
+<span class="lineNum">     257 </span><span class="lineNoCov">          0 :                 return NULL;</span>
+<span class="lineNum">     258 </span>            :         
+<span class="lineNum">     259 </span><span class="lineCov">          1 :         if (table-&gt;num_elements == 0)</span>
+<span class="lineNum">     260 </span>            :                 {
+<span class="lineNum">     261 </span>            : 
+<span class="lineNum">     262 </span><span class="lineNoCov">          0 :                         iter-&gt;is_valid = false;</span>
+<span class="lineNum">     263 </span><span class="lineNoCov">          0 :                         iter-&gt;ht = table;</span>
+<span class="lineNum">     264 </span><span class="lineNoCov">          0 :                         iter-&gt;bucket_it = NULL;</span>
+<span class="lineNum">     265 </span><span class="lineNoCov">          0 :                         return iter;</span>
+<span class="lineNum">     266 </span>            :                 }
+<span class="lineNum">     267 </span>            : 
+<span class="lineNum">     268 </span><span class="lineCov">          1 :         iter-&gt;is_valid = true;</span>
+<span class="lineNum">     269 </span><span class="lineCov">          1 :         iter-&gt;ht = table;</span>
+<span class="lineNum">     270 </span>            :         uint32_t i;
+<span class="lineNum">     271 </span>            : 
+<span class="lineNum">     272 </span><span class="lineCov">          1 :         for (i = 0; i &lt; table-&gt;num_buckets; i++)</span>
+<span class="lineNum">     273 </span>            :                 {
+<span class="lineNum">     274 </span><span class="lineCov">          1 :                         if (NumElementsInLinkedList(table-&gt;buckets[i]) &gt; 0)</span>
+<span class="lineNum">     275 </span>            :                                 {
+<span class="lineNum">     276 </span><span class="lineCov">          1 :                                         iter-&gt;bucket_num = i;</span>
+<span class="lineNum">     277 </span><span class="lineCov">          1 :                                         break;</span>
+<span class="lineNum">     278 </span>            :                                 }
+<span class="lineNum">     279 </span>            :                 }
+<span class="lineNum">     280 </span><span class="lineCov">          1 :         assert(i &lt; table-&gt;num_buckets);</span>
+<span class="lineNum">     281 </span><span class="lineCov">          1 :         iter-&gt;bucket_it = LLMakeIterator(table-&gt;buckets[iter-&gt;bucket_num], 0UL);</span>
+<span class="lineNum">     282 </span><span class="lineCov">          1 :         if(iter-&gt;bucket_it == NULL)</span>
+<span class="lineNum">     283 </span>            :                 {
+<span class="lineNum">     284 </span><span class="lineNoCov">          0 :                         free(iter);</span>
+<span class="lineNum">     285 </span><span class="lineNoCov">          0 :                         return NULL;</span>
+<span class="lineNum">     286 </span>            :                 }
+<a name="287"><span class="lineNum">     287 </span><span class="lineCov">          1 :         return iter;</span></a>
+<span class="lineNum">     288 </span>            : }
+<span class="lineNum">     289 </span><span class="lineCov">      20000 : static void ResizeHashTable(HashTable ht)</span>
+<span class="lineNum">     290 </span>            : {
+<span class="lineNum">     291 </span>            :         /* resize if load factor &gt; 3 */
+<span class="lineNum">     292 </span><span class="lineCov">      20000 :         if (ht-&gt;num_elements &lt; (3 * ht-&gt;num_buckets))</span>
+<span class="lineNum">     293 </span><span class="lineCov">      20000 :                 return;</span>
+<span class="lineNum">     294 </span>            : 
+<span class="lineNum">     295 </span>            :         /* resize case: allocate new hashtable &amp; transfer payloads
+<span class="lineNum">     296 </span>            :          *           from old ht to new ht and free old ht
+<span class="lineNum">     297 </span>            :          */
+<span class="lineNum">     298 </span>            : 
+<span class="lineNum">     299 </span><span class="lineNoCov">          0 :         HashTable newht = AllocateHashTable(ht-&gt;num_buckets * 9);</span>
+<span class="lineNum">     300 </span><span class="lineNoCov">          0 :         if (newht == NULL)</span>
+<span class="lineNum">     301 </span><span class="lineNoCov">          0 :                 return;</span>
+<span class="lineNum">     302 </span>            : 
+<span class="lineNum">     303 </span><span class="lineNoCov">          0 :         HTIter it = HashTableMakeIterator(ht);</span>
+<span class="lineNum">     304 </span><span class="lineNoCov">          0 :         if (it == NULL)</span>
+<span class="lineNum">     305 </span>            :                 {
+<span class="lineNum">     306 </span><span class="lineNoCov">          0 :                         FreeHashTable(newht, &amp;NullFree);</span>
+<span class="lineNum">     307 </span><span class="lineNoCov">          0 :                         return;</span>
+<span class="lineNum">     308 </span>            :                 }
+<span class="lineNum">     309 </span>            : 
+<span class="lineNum">     310 </span>            :         HTKeyValue item, dummy;
+<span class="lineNum">     311 </span><span class="lineNoCov">          0 :         printf(&quot;RESIZEINGIFDNGIFDNGIN\n&quot;);</span>
+<span class="lineNum">     312 </span><span class="lineNoCov">          0 :         while (!HTIteratorPastEnd(it))</span>
+<span class="lineNum">     313 </span>            :                 {
+<span class="lineNum">     314 </span><span class="lineNoCov">          0 :                         assert(HTIteratorGet(it, &amp;item) == 1);</span>
+<span class="lineNum">     315 </span><span class="lineNoCov">          0 :                         if (InsertHashTable(newht, item, &amp;dummy) != 1)</span>
+<span class="lineNum">     316 </span>            :                                 {
+<span class="lineNum">     317 </span><span class="lineNoCov">          0 :                                         HTIteratorFree(it);</span>
+<span class="lineNum">     318 </span><span class="lineNoCov">          0 :                                         FreeHashTable(newht, &amp;NullFree);</span>
+<span class="lineNum">     319 </span><span class="lineNoCov">          0 :                                         return;</span>
+<span class="lineNum">     320 </span>            :                                 }
+<span class="lineNum">     321 </span><span class="lineNoCov">          0 :                         HTIteratorNext(it);</span>
+<span class="lineNum">     322 </span>            :                 }
+<span class="lineNum">     323 </span>            : 
+<span class="lineNum">     324 </span><span class="lineNoCov">          0 :         HTIteratorFree(it);</span>
+<span class="lineNum">     325 </span>            : 
+<span class="lineNum">     326 </span>            :         HashTableRecord tmp;
+<span class="lineNum">     327 </span>            : 
+<span class="lineNum">     328 </span><span class="lineNoCov">          0 :         tmp = *ht;</span>
+<span class="lineNum">     329 </span><span class="lineNoCov">          0 :         *ht = *newht;</span>
+<span class="lineNum">     330 </span><span class="lineNoCov">          0 :         *newht = tmp;</span>
+<span class="lineNum">     331 </span><span class="lineNoCov">          0 :         FreeHashTable(newht, &amp;NullFree);</span>
+<span class="lineNum">     332 </span>            : 
+<span class="lineNum">     333 </span><span class="lineNoCov">          0 :         return;</span>
+<a name="334"><span class="lineNum">     334 </span>            : }</a>
+<span class="lineNum">     335 </span>            : 
+<span class="lineNum">     336 </span><span class="lineCov">          1 : void HTIteratorFree(HTIter iter)</span>
+<span class="lineNum">     337 </span>            : {
+<span class="lineNum">     338 </span><span class="lineCov">          1 :         assert(iter);</span>
+<span class="lineNum">     339 </span>            : 
+<span class="lineNum">     340 </span><span class="lineCov">          1 :         if (iter-&gt;bucket_it != NULL)</span>
+<span class="lineNum">     341 </span><span class="lineCov">          1 :                 LLIteratorFree(iter-&gt;bucket_it);</span>
+<span class="lineNum">     342 </span>            :         
+<span class="lineNum">     343 </span><span class="lineCov">          1 :         free(iter);</span>
+<a name="344"><span class="lineNum">     344 </span><span class="lineCov">          1 : }</span></a>
+<span class="lineNum">     345 </span>            : 
+<span class="lineNum">     346 </span><span class="lineCov">      19999 : int HTIteratorNext(HTIter iter)</span>
+<span class="lineNum">     347 </span>            : {
+<span class="lineNum">     348 </span><span class="lineCov">      19999 :         assert(iter);</span>
+<span class="lineNum">     349 </span>            :         
+<span class="lineNum">     350 </span><span class="lineCov">      19999 :         if (HTIteratorPastEnd(iter))</span>
+<span class="lineNum">     351 </span><span class="lineNoCov">          0 :                 return 0;</span>
+<span class="lineNum">     352 </span>            : 
+<span class="lineNum">     353 </span>            :         //      uint64_t i, num_buckets;
+<span class="lineNum">     354 </span>            : 
+<span class="lineNum">     355 </span>            :         //      num_buckets = iter-&gt;ht-&gt;num_buckets;
+<span class="lineNum">     356 </span><span class="lineCov">      19999 :         int found = 0;</span>
+<span class="lineNum">     357 </span>            : 
+<span class="lineNum">     358 </span>            :         /* case 1: still an element in current bucket */
+<span class="lineNum">     359 </span><span class="lineCov">      19999 :         if (LLIteratorHasNext(iter-&gt;bucket_it))</span>
+<span class="lineNum">     360 </span>            :                 {
+<span class="lineNum">     361 </span><span class="lineCov">      10914 :                         LLIteratorNext(iter-&gt;bucket_it);</span>
+<span class="lineNum">     362 </span><span class="lineCov">      10914 :                         found = 1;</span>
+<span class="lineNum">     363 </span>            : 
+<span class="lineNum">     364 </span><span class="lineCov">      10914 :                         return 1;</span>
+<span class="lineNum">     365 </span>            :                 }
+<span class="lineNum">     366 </span>            :         /* case 2: iter is at the end of a list but not past the full table  */
+<span class="lineNum">     367 </span><span class="lineCov">       9085 :         iter-&gt;bucket_num++;</span>
+<span class="lineNum">     368 </span><span class="lineCov">      19085 :         while(!HTIteratorPastEnd(iter))</span>
+<span class="lineNum">     369 </span>            :                 {
+<span class="lineNum">     370 </span>            : 
+<span class="lineNum">     371 </span><span class="lineCov">       9999 :                         if (NumElementsInLinkedList(iter-&gt;ht-&gt;buckets[iter-&gt;bucket_num]) &gt; 0)</span>
+<span class="lineNum">     372 </span>            :                                 {
+<span class="lineNum">     373 </span><span class="lineCov">       9084 :                                         LLIteratorFree(iter-&gt;bucket_it);</span>
+<span class="lineNum">     374 </span><span class="lineCov">       9084 :                                         iter-&gt;bucket_it = LLMakeIterator(iter-&gt;ht-&gt;buckets[iter-&gt;bucket_num], 0);</span>
+<span class="lineNum">     375 </span><span class="lineCov">       9084 :                                         if (iter-&gt;bucket_it == NULL)</span>
+<span class="lineNum">     376 </span>            :                                                 {
+<span class="lineNum">     377 </span><span class="lineNoCov">          0 :                                                         iter-&gt;is_valid = false;</span>
+<span class="lineNum">     378 </span><span class="lineNoCov">          0 :                                                         return 0;</span>
+<span class="lineNum">     379 </span>            :                                                 }
+<span class="lineNum">     380 </span><span class="lineCov">       9084 :                                         return 1;</span>
+<span class="lineNum">     381 </span>            :                                 }
+<span class="lineNum">     382 </span>            :                                                                         
+<span class="lineNum">     383 </span><span class="lineCov">        915 :                         iter-&gt;bucket_num++;</span>
+<span class="lineNum">     384 </span>            :                 }
+<span class="lineNum">     385 </span>            :                 
+<span class="lineNum">     386 </span><span class="lineCov">          1 :         return 0;</span>
+<span class="lineNum">     387 </span>            : }
+<span class="lineNum">     388 </span>            : 
+<span class="lineNum">     389 </span>            : /* 
+<span class="lineNum">     390 </span>            : struct ht_itrec;
+<span class="lineNum">     391 </span>            : typedef struct ht_itrec *HTIter;  // same trick to hide implementation.
+<span class="lineNum">     392 </span>            : 
+<span class="lineNum">     393 </span>            :  
+<span class="lineNum">     394 </span>            : typedef struct htrec {
+<span class="lineNum">     395 </span>            :     uint64_t        num_buckets;   // # of buckets in this HT?
+<span class="lineNum">     396 </span>            :     uint64_t        num_elements;  // # of elements currently in this HT?
+<span class="lineNum">     397 </span>            :     LinkedList     *buckets;       // the array of buckets
+<span class="lineNum">     398 </span>            : } HashTableRecord;
+<span class="lineNum">     399 </span>            : typedef struct ht_itrec {
+<span class="lineNum">     400 </span>            :     bool       is_valid;    // is this iterator valid?
+<span class="lineNum">     401 </span>            :     HashTable  ht;          // the HT we're pointing into
+<span class="lineNum">     402 </span>            :     uint64_t   bucket_num;  // which bucket are we in?
+<span class="lineNum">     403 </span>            :     LLIter     bucket_it;   // iterator for the bucket, or NULL
+<span class="lineNum">     404 </span>            : } HTIterRecord;
+<a name="405"><span class="lineNum">     405 </span>            :  */</a>
+<span class="lineNum">     406 </span>            : 
+<span class="lineNum">     407 </span><span class="lineCov">      69998 : int HTIteratorPastEnd(HTIter iter)</span>
+<span class="lineNum">     408 </span>            : {
+<span class="lineNum">     409 </span><span class="lineCov">      69998 :         assert(iter);</span>
+<span class="lineNum">     410 </span><span class="lineCov">      69998 :         if (!iter-&gt;is_valid || iter-&gt;ht-&gt;num_elements == 0</span>
+<span class="lineNum">     411 </span><span class="lineCov">      69997 :                 || (iter-&gt;bucket_num &gt;= iter-&gt;ht-&gt;num_buckets))</span>
+<span class="lineNum">     412 </span>            :                 {
+<span class="lineNum">     413 </span><span class="lineCov">          2 :                         iter-&gt;is_valid = false;</span>
+<span class="lineNum">     414 </span><span class="lineCov">          2 :                         return 1;</span>
+<span class="lineNum">     415 </span>            :                 }
+<span class="lineNum">     416 </span>            : 
+<span class="lineNum">     417 </span><span class="lineCov">      69996 :         return 0;</span>
+<a name="418"><span class="lineNum">     418 </span>            : }</a>
+<span class="lineNum">     419 </span>            : 
+<span class="lineNum">     420 </span><span class="lineCov">      19999 : int HTIteratorGet(HTIter iter, HTKeyValue *keyvalue)</span>
+<span class="lineNum">     421 </span>            : {
+<span class="lineNum">     422 </span><span class="lineCov">      19999 :         assert(iter);</span>
+<span class="lineNum">     423 </span><span class="lineCov">      19999 :         if (HTIteratorPastEnd(iter))</span>
+<span class="lineNum">     424 </span><span class="lineNoCov">          0 :                 return 0;</span>
+<span class="lineNum">     425 </span><span class="lineCov">      19999 :         HTKeyValue *payload = malloc(sizeof(HTKeyValue));</span>
+<span class="lineNum">     426 </span><span class="lineCov">      19999 :         if (payload == NULL)</span>
+<span class="lineNum">     427 </span><span class="lineNoCov">          0 :                 return 0;</span>
+<span class="lineNum">     428 </span><span class="lineCov">      19999 :         LLIteratorGetPayload(iter-&gt;bucket_it, (void **) &amp;payload);</span>
+<span class="lineNum">     429 </span>            : 
+<span class="lineNum">     430 </span><span class="lineCov">      19999 :         keyvalue-&gt;key = payload-&gt;key;</span>
+<span class="lineNum">     431 </span><span class="lineCov">      19999 :         keyvalue-&gt;value = payload-&gt;value;</span>
+<span class="lineNum">     432 </span>            : 
+<span class="lineNum">     433 </span><span class="lineCov">      19999 :         return 1;</span>
+<a name="434"><span class="lineNum">     434 </span>            : }</a>
+<span class="lineNum">     435 </span>            : 
+<span class="lineNum">     436 </span><span class="lineNoCov">          0 : int HTIteratorDelete(HTIter iter, HTKeyValue *keyvalue)</span>
+<span class="lineNum">     437 </span>            : {
+<span class="lineNum">     438 </span><span class="lineNoCov">          0 :         assert(iter);</span>
+<span class="lineNum">     439 </span>            : 
+<span class="lineNum">     440 </span>            :         HTKeyValue kv;
+<span class="lineNum">     441 </span>            :         int res, retval;
+<span class="lineNum">     442 </span>            : 
+<span class="lineNum">     443 </span><span class="lineNoCov">          0 :         res = HTIteratorGet(iter, &amp;kv);</span>
+<span class="lineNum">     444 </span><span class="lineNoCov">          0 :         if (res == 0)</span>
+<span class="lineNum">     445 </span><span class="lineNoCov">          0 :                 return 0;</span>
+<span class="lineNum">     446 </span>            : 
+<span class="lineNum">     447 </span><span class="lineNoCov">          0 :         res = HTIteratorNext(iter);</span>
+<span class="lineNum">     448 </span><span class="lineNoCov">          0 :         if (res == 0)</span>
+<span class="lineNum">     449 </span><span class="lineNoCov">          0 :                 retval = 2;</span>
+<span class="lineNum">     450 </span>            :         else
+<span class="lineNum">     451 </span><span class="lineNoCov">          0 :                 retval = 1;</span>
+<span class="lineNum">     452 </span>            : 
+<span class="lineNum">     453 </span><span class="lineNoCov">          0 :         res = RemoveFromHashTable(iter-&gt;ht, kv.key, keyvalue);</span>
+<span class="lineNum">     454 </span><span class="lineNoCov">          0 :         assert(res == 1);</span>
+<span class="lineNum">     455 </span><span class="lineNoCov">          0 :         assert(kv.key == keyvalue-&gt;key);</span>
+<span class="lineNum">     456 </span><span class="lineNoCov">          0 :         assert(kv.value == keyvalue-&gt;value);</span>
+<span class="lineNum">     457 </span>            : 
+<span class="lineNum">     458 </span><span class="lineNoCov">          0 :         return retval;</span>
+<span class="lineNum">     459 </span>            : }
+<span class="lineNum">     460 </span>            :  
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.12</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

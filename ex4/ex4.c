@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[])
 {
-	
+	printf("hi erika\n");
 	uint64_t desired;
 	sscanf(argv[1], "%lu", &desired);
 	printf("the %lu prime is %lu \n", desired, nth_prime(desired));
